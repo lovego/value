@@ -33,7 +33,11 @@ func tryField(value reflect.Value, name string) reflect.Value {
 		case reflect.Struct:
 			return value.FieldByName(name)
 		case reflect.Map:
-			return value.MapIndex(reflect.ValueOf(name))
+			var v = value.MapIndex(reflect.ValueOf(name))
+			if v.IsValid() {
+				return v
+			}
+			return reflect.Zero(value.Type().Elem())
 		case reflect.Slice, reflect.Array, reflect.String:
 			if i, err := strconv.Atoi(name); err == nil {
 				return value.Index(i)

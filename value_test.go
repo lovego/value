@@ -19,6 +19,7 @@ type TestStruct struct {
 type TestStruct2 struct {
 	Time time.Time
 	Map  map[string][]int
+	Map2 map[string]int
 }
 
 func (t TestStruct) Method() string {
@@ -42,6 +43,7 @@ func ExampleGet_NonPtrType() {
 	fmt.Println(value.Get(v, []string{"String"}))
 	fmt.Println(value.Get(v, []string{"Layer", "Time"}))
 	fmt.Println(value.Get(v, []string{"Layer", "Map", "x", "2"}))
+	fmt.Println(value.Get(v, []string{"Layer", "Map2", "x"}))
 	fmt.Println(value.Get(v, []string{"Method"}))
 	fmt.Println(value.Get(v, []string{"PtrMethod"}))
 
@@ -52,6 +54,7 @@ func ExampleGet_NonPtrType() {
 	// 中国
 	// 2020-08-07 09:10:11 +0000 UTC
 	// 3
+	// 0
 	// 方法
 	// <invalid reflect.Value>
 	// 指针方法
@@ -111,4 +114,11 @@ func BenchmarkGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		value.Get(v, []string{"Layer", "Map", "x", "2"}) // 400~500 ns
 	}
+}
+
+func ExampleMapIndex() {
+	var m = map[string]int{}
+	fmt.Println(reflect.ValueOf(m).MapIndex(reflect.ValueOf("x")))
+	// Output:
+	// <invalid reflect.Value>
 }
