@@ -10,16 +10,20 @@ import (
 )
 
 type TestStruct struct {
-	String  string
-	Bool    bool
-	Layer   TestStruct2
-	Pointer *string
+	String       string
+	Bool         bool
+	Interface    interface{}
+	Pointer      *string
+	Layer        TestStruct2
+	PointerLayer *TestStruct2
+	*TestStruct2
 }
 
 type TestStruct2 struct {
-	Time time.Time
-	Map  map[string][]int
-	Map2 map[string]int
+	Time  time.Time
+	Slice []int
+	Map   map[string][]int
+	Map2  map[string]int
 }
 
 func (t TestStruct) Method() string {
@@ -30,20 +34,27 @@ func (t *TestStruct) PtrMethod() string {
 	return "指针方法"
 }
 
+func (t *TestStruct) SettableMethod() *string {
+	return &t.String
+}
+
 var ts = TestStruct{
 	String: "中国",
 	Layer: TestStruct2{
 		Time: time.Date(2020, 8, 07, 9, 10, 11, 0, time.UTC),
 		Map:  map[string][]int{"x": {1, 2, 3}},
 	},
+	Interface: TestStruct2{},
 }
 
-func ExampleGet_NonPtrType() {
+func ExampleGet_nonPtrType() {
 	v := reflect.ValueOf(ts)
 	fmt.Println(value.Get(v, []string{"String"}))
 	fmt.Println(value.Get(v, []string{"Layer", "Time"}))
 	fmt.Println(value.Get(v, []string{"Layer", "Map", "x", "2"}))
+	fmt.Println(value.Get(v, []string{"Layer", "Map", "x", "3"}))
 	fmt.Println(value.Get(v, []string{"Layer", "Map2", "x"}))
+	fmt.Println(value.Get(v, []string{"Interface", "Map"}))
 	fmt.Println(value.Get(v, []string{"Method"}))
 	fmt.Println(value.Get(v, []string{"PtrMethod"}))
 
@@ -55,12 +66,14 @@ func ExampleGet_NonPtrType() {
 	// 2020-08-07 09:10:11 +0000 UTC
 	// 3
 	// 0
+	// 0
+	// map[]
 	// 方法
 	// <invalid reflect.Value>
 	// 指针方法
 }
 
-func ExampleGet_PtrType() {
+func ExampleGet_ptrType() {
 	v := reflect.ValueOf(&ts)
 	fmt.Println(value.Get(v, []string{"String"}))
 	fmt.Println(value.Get(v, []string{"Layer", "Time"}))
@@ -80,6 +93,21 @@ func ExampleGet_PtrType() {
 	// <invalid reflect.Value>
 	// <invalid reflect.Value>
 	// <invalid reflect.Value>
+}
+
+func ExampleGet_ptr() {
+	v := reflect.ValueOf(TestStruct{})
+	fmt.Println(value.Get(v, []string{"Pointer"}))
+	fmt.Println(value.Get(v, []string{"PointerLayer", "Time"}))
+	fmt.Println(value.Get(v, []string{"Time"}))
+
+	var ts2 = &TestStruct2{Time: time.Date(2020, 8, 7, 9, 10, 11, 0, time.UTC)}
+	fmt.Println(value.Get(reflect.ValueOf(TestStruct{TestStruct2: ts2}), []string{"Time"}))
+	// Output:
+	// <nil>
+	// 0001-01-01 00:00:00 +0000 UTC
+	// 0001-01-01 00:00:00 +0000 UTC
+	// 2020-08-07 09:10:11 +0000 UTC
 }
 
 // https://golang.org/ref/spec#Method_sets
